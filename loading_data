@@ -1,0 +1,94 @@
+"""
+EE 5561 - Image Processing
+Final Project
+Deadline: December 17, 2023
+coded by: Justine Serdoncillo start 12/6/23
+adapted: Ricardo Linhares
+"""
+
+#### IMPORT LIBRARIES ####
+import torch
+from torchvision import datasets # maybe MS Coco detection
+from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
+import torch.nn as nn
+import numpy as np
+from PIL import Image
+from net import *
+import os
+
+
+#### LOAD DATASET ####
+orig_imag_path = r"C:\Users\rickl\Desktop\Camouflage\Images\Train"  #Using the animal images here
+imag_segmented_path = r"C:\Users\rickl\Desktop\Camouflage\GT"       #Using the mask images here
+
+# We need to make sure that the files will be organized in the same way in both folders:
+image_list = sorted(os.listdir(orig_imag_path))
+mask_list = sorted(os.listdir(imag_segmented_path))
+
+data_full = []
+# Now let's transform all of our images in the ToTensor type as required for pytorch:
+for i in range(len(image_list)-1):
+    img_name = os.path.join(orig_imag_path, image_list[i])
+    mask_name = os.path.join(imag_segmented_path, mask_list[i])
+    image = ToTensor()(Image.open(img_name).convert("RGB"))
+    mask =  ToTensor()(Image.open(mask_name).convert("L"))
+
+    data_full.append((image,mask))
+
+
+# visualize the data
+#The data_full explained: data_full[0][0] --> first [0] is the image being observed (lines) ; second [0] is the column, indicates if we are looking the image (0) or the mask (1).
+plt.imshow(data_full[0][0].permute(1, 2, 0))  # when we transform int ToTensor the order is different than the one used in Imshow, that's why we use  permute here.
+plt.axis('off')
+plt.show()
+
+
+
+### SPLIT DATASET ####
+
+
+### SETUP MODEL ####
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = deepResUnet(3,1)
+model.to(device)
+
+# define the loss function
+criterion = nn.CrossEntropyLoss()
+
+# define the optimizer
+learning_rate = 0.1
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+# define epoch number
+num_epochs = 10
+
+# initialize the loss
+loss_list = []
+loss_list_mean = []
+
+#### START TRAINING ####
+# Stochastic gradient descent used in training.
+# The Deep residual U-Net paper uses the mean squared error the loss function.
+#  L(W) = 1/N * Sum||Net(Ii,W) - s_i||^2
+# Where N is the number of training samples.
+
+#### VALIDATION #### ? how for image segmentation
+
+#### VISUALIZE LOSS(?) ####
+
+#### TEST MODEL ####
+
+#### SAVE MODEL ####
+fname =
+torch.save(model.state_dict(), fname + ".h5")
+
+#### (OPTION) LOAD MODEL ####
+fname =
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = deepResUnet()
+model.to(device)
+model.load_state_dict(torch.load(fname + ".h5"))
+model.eval()
+
+# test images
